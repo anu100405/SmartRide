@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.18",
-    "@types/express": "^5.0.1",
+    "@types/express": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/mongoose": "^5.11.96",
     "@types/morgan": "^1.9.9",

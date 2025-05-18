@@ -1,45 +1,59 @@
 import { Request, Response } from "express";
-import RideRequest from "../models/rideRequest.model";
+import { findNearestNode } from "../utils/mapMatching";
+import { dijkstra } from "../utils/dijkstra";
+import { loadGraph } from "../utils/graphLoader";
+import { calculateTotalDistance } from "../utils/calculateDistance";
 import calculateFare from "../services/fareCalculator";
-import { graph, nodes } from "../services/graph";
-import { dijkstra } from "../services/dijkstra";
-import { findClosestNode } from "../services/mapMatching";
-import { getWeatherCondition, getTrafficLevel } from "../services/externalAPI";
+import { estimateTraffic, getWeatherCondition } from "../services/externalAPI";
 
-export const handleRideRequest = async (req: Request, res: Response) => {
+export const getShortestPathWithFare = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   try {
-    const { userId, from, to } = req.body;
+    const graph = loadGraph();
+    const { fromLat, fromLon, toLat, toLon } = req.query;
 
-    // Map pickup/drop to closest nodes
-    const startNode = findClosestNode(from.lat, from.lon, nodes);
-    const endNode = findClosestNode(to.lat, to.lon, nodes);
+    if (!fromLat || !fromLon || !toLat || !toLon) {
+      res.status(400).json({ error: "Missing coordinates" });
+      return;
+    }
 
-    // Get shortest path and distance using Dijkstra
-    const { distance } = dijkstra(graph, startNode, endNode);
+    const startId = findNearestNode(graph.nodes, +fromLat, +fromLon);
+    const endId = findNearestNode(graph.nodes, +toLat, +toLon);
+    const path = dijkstra(startId, endId, graph.edges);
 
-    // Approximate duration: assume avg speed 40 km/h (0.66 km/min)
-    const durationMin = distance / 0.66;
+    if (!path || path.length === 0) {
+      res.status(404).json({ error: "No path found between given locations" });
+      return;
+    }
 
-    // Get traffic and weather for fare multiplier
-    const weather = await getWeatherCondition(from.lat, from.lon);
-    const traffic = await getTrafficLevel(from.lat, from.lon);
+    const pathCoords = path.map((id) => graph.nodes.find((n) => n.id === id));
+    const distanceKm = calculateTotalDistance(pathCoords as any[]);
 
-    const fare = calculateFare(distance, durationMin, traffic, weather);
+    const averageSpeedKmph = 30;
+    const timeMin = (distanceKm / averageSpeedKmph) * 60;
 
-    const ride = await RideRequest.create({
-      userId,
-      from,
-      to,
-      estimatedDistance: distance,
-      estimatedTime: durationMin,
-      trafficLevel: traffic,
-      weatherCondition: weather,
+    const traffic = estimateTraffic(); // make sure this returns something like 'heavy', 'normal'
+    const weather = await getWeatherCondition(+fromLat, +fromLon);
+
+    const fare = calculateFare(
+      distanceKm,
+      timeMin,
+      traffic as string,
+      weather as string
+    );
+
+    res.json({
+      distanceKm,
+      timeMin: parseFloat(timeMin.toFixed(2)),
       fare,
-      routeNodes: [], // Optional: you can add path nodes if you want
+      traffic,
+      weather,
+      path: pathCoords,
     });
-
-    res.status(200).json({ rideId: ride._id, fare, eta: durationMin });
   } catch (err) {
-    res.status(500).json({ error: "Ride request failed", details: err });
+    console.error("Error in getShortestPathWithFare:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
