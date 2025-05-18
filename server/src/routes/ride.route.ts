@@ -1,8 +1,8 @@
 import express from "express";
-import { handleRideRequest } from "../controllers/ride.controller";
+import { getShortestPathWithFare } from "../controllers/ride.controller";
 
 const router = express.Router();
 
-router.route("/request").post(handleRideRequest);
+router.route("/shortest-path").get(getShortestPathWithFare);
 
-export default router;;
+export default router;
