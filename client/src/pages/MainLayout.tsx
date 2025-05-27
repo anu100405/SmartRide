@@ -1,12 +1,25 @@
 import Navbar from "@/components/Navbar";
+import { useUser } from "@/context/UserContext";
+import { connectSocket, disconnectSocket } from "@/socket";
+import { useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import Map from "../components/Map";
 
 const MainLayout = () => {
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (user) {
+      connectSocket();
+    }
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [user]);
+
   return (
-    <div>
+    <div className="h-[200vh]">
       <Navbar />
-      <Map />
       <div>
         <Outlet />
       </div>

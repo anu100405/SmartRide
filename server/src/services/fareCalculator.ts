@@ -2,7 +2,8 @@ const calculateFare = (
   distanceKm: number,
   timeMin: number,
   traffic: string,
-  weather: string
+  weather: string,
+  numberOfRiders: number = 1
 ): number => {
   const baseFare = 30;
   const ratePerKm = 10;
@@ -14,13 +15,15 @@ const calculateFare = (
   if (traffic === "heavy") trafficMultiplier = 1.2;
   if (weather === "rain" || weather === "storm") weatherMultiplier = 1.15;
 
-  const fare =
+  const totalFare =
     baseFare +
     (distanceKm * ratePerKm + timeMin * ratePerMin) *
       trafficMultiplier *
       weatherMultiplier;
 
-  return parseFloat(fare.toFixed(2));
+  const farePerRider = totalFare / numberOfRiders;
+
+  return parseFloat(farePerRider.toFixed(2));
 };
 
 export default calculateFare;
