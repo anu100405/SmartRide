@@ -1,9 +1,12 @@
 import express from "express";
-import { getShortestPathWithFare } from "../controllers/ride.controller";
-import isAuthenticated from "../middlewares/isAuthenticated";
+import {
+  getShortestPathWithFare,
+  handleRideRequest,
+} from "../controllers/ride.controller";
 
 const router = express.Router();
 
-router.route("/shortest-path").get(isAuthenticated, getShortestPathWithFare);
+router.route("/book-ride").get(getShortestPathWithFare);
+router.route("/request-ride").post(handleRideRequest);
 
 export default router;

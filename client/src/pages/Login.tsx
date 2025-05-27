@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useUser } from "@/context/UserContext";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
@@ -16,6 +17,8 @@ const Login = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
+  const { setUser } = useUser();
+
   const valueChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -26,7 +29,7 @@ const Login = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/user/login",
+        `${import.meta.env.VITE_BACKEND_URL}/user/login`,
         formData,
         {
           headers: {
@@ -36,8 +39,9 @@ const Login = () => {
         }
       );
       if (res?.data?.success) {
-        toast.success(res?.data?.message || "Register Successfuly");
-        navigate("/login", {
+        toast.success(res?.data?.message || "Login Successfully");
+        setUser(res?.data?.user);
+        navigate("/", {
           replace: true,
         });
       }

@@ -28,7 +28,8 @@ const Register = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/user/register",
+
+        `${import.meta.env.VITE_BACKEND_URL}/user/register`,
         formData,
         {
           headers: {

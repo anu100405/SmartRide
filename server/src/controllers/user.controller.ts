@@ -68,11 +68,7 @@ export const login = async (req: Request, res: Response): Promise<any> => {
       });
     }
 
-    console.log("Entered:", password);
-    console.log("Stored Hash:", user.password);
-
     const isValidPassword = await bcrypt.compare(password, user.password);
-    console.log(isValidPassword);
     if (!isValidPassword) {
       // return if password is not valid
       return res.status(401).json({
